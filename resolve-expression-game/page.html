@@ -8,29 +8,32 @@
 			<div v-else>
 				<div>
 					please, resolve the expression:
-					{{expression}} = {{expressionResult}}
+					{{expression}} = 
+					<!--{{expressionResult}}-->
 					<br/>
 					time to resolve:
-					{{timeForAnswer}}
+					{{printableCurrentTimeToAnswer}}
 				</div>
-				<input type="number" v-model="userAnswer"/>
+				<input type="number" v-model="userAnswer" @keydown="submitAnswer"/>
 			</div>
 			<table v-if="history.length>0">
 				<thead>
 					<th>expression</th>
 					<th>user answer</th>
 					<th>right answer</th>
-					<th>point</th>
 				</thead>
 				<tbody>
 					<tr v-for="item in history">
 						<td>{{item.expression}}</td>
 						<td>{{item.userAnswer}}</td>
 						<td>{{item.rightAnswer}}</td>
-						<td>{{item.point}}</td>
 					</tr>
 				</tbody>
 			</table>
+			<div>
+				Results:
+				{{totalPoints}}
+			</div>
 		</div>
 	</body>
 </html>
@@ -42,17 +45,25 @@
 			isGameStarted: false,
 			expression: '',
 			userAnswer: '',
-			timeToAnswer: 1000,
+			timeToAnswer: 5000,
 			history: [],
 			roundNumber: 0,
 			globalTimer: null,
 			globalTimerInterval: 100,
 			applicationTime: 0,
+			currentTimeToAnswer: 0,
+			maxRound: 5,
 	    },
 		mounted(){
 			
 		},
 		methods: {
+			submitAnswer(e){
+				if (e.key == "Enter") {
+					this.endRound();
+					
+				}
+			},
 			startGame(){
 				this.history = [];
 				this.roundNumber = 0;
@@ -70,15 +81,17 @@
 			},
 			onNextGlobalTimerTick(){
 				this.applicationTime += this.globalTimerInterval;
-				if (this.applicationTime % this.timeToAnswer == 0){
+				this.currentTimeToAnswer -= this.globalTimerInterval;
+				if (this.currentTimeToAnswer <= 0){
 					this.endRound();
 				}
 			},
 			startRound(){
 				this.roundNumber++;
-				if (this.roundNumber>5){
+				this.currentTimeToAnswer = this.timeToAnswer;
+				this.userAnswer = '';
+				if (this.roundNumber>this.maxRound){
 					this.stopGame();
-					
 				}
 				this.expression = this.getNewExpression();
 			},
@@ -88,7 +101,7 @@
 						expression: this.expression,
 						userAnswer: this.userAnswer,
 						rightAnswer: this.expressionResult,
-						point: 0+this.isRightAnswer,
+						isRightAnswer: this.isRightAnswer,
 					} 
 					this.history.push(historyElement);
 				};
@@ -119,15 +132,21 @@
 			}
 		},
 		computed: {
-			timeForAnswer(){
-				let timeForAnswerMs = this.timeToAnswer - (this.applicationTime % this.timeToAnswer);
-				return timeForAnswerMs/1000;
+			printableCurrentTimeToAnswer(){
+				return this.currentTimeToAnswer / 1000
 			},
 			expressionResult(){
 				return eval(this.expression);
 			},
 			isRightAnswer(){
 				if (this.userAnswer == this.expressionResult) {return true }else return false;
+			},
+			totalPoints(){
+				let sum = 0;
+				this.history.forEach(x => {
+					sum += x.isRightAnswer;
+				});
+				return sum;
 			}
 		}
 	});

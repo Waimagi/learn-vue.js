@@ -1,0 +1,134 @@
+<html>
+	<head>
+		<script type="text/javascript" src="vue.js"></script>
+	</head>
+	<body>
+		<div id="app">
+			<button v-if="!isGameStarted" @click="startGame">Start Game</button>
+			<div v-else>
+				<div>
+					please, resolve the expression:
+					{{expression}} = {{expressionResult}}
+					<br/>
+					time to resolve:
+					{{timeForAnswer}}
+				</div>
+				<input type="number" v-model="userAnswer"/>
+			</div>
+			<table v-if="history.length>0">
+				<thead>
+					<th>expression</th>
+					<th>user answer</th>
+					<th>right answer</th>
+					<th>point</th>
+				</thead>
+				<tbody>
+					<tr v-for="item in history">
+						<td>{{item.expression}}</td>
+						<td>{{item.userAnswer}}</td>
+						<td>{{item.rightAnswer}}</td>
+						<td>{{item.point}}</td>
+					</tr>
+				</tbody>
+			</table>
+		</div>
+	</body>
+</html>
+
+<script type="text/javascript">
+	var app = new Vue({
+		el: '#app',
+	    data: {
+			isGameStarted: false,
+			expression: '',
+			userAnswer: '',
+			timeToAnswer: 1000,
+			history: [],
+			roundNumber: 0,
+			globalTimer: null,
+			globalTimerInterval: 100,
+			applicationTime: 0,
+	    },
+		mounted(){
+			
+		},
+		methods: {
+			startGame(){
+				this.history = [];
+				this.roundNumber = 0;
+				this.applicationTime = 0;
+				this.isGameStarted = true;
+				this.endRound();
+				this.startGlobalTimer();
+			},
+			stopGame(){
+				this.isGameStarted = false;
+				clearInterval(this.globalTimer);
+			},
+			startGlobalTimer(){
+				this.globalTimer = setInterval(this.onNextGlobalTimerTick, this.globalTimerInterval);
+			},
+			onNextGlobalTimerTick(){
+				this.applicationTime += this.globalTimerInterval;
+				if (this.applicationTime % this.timeToAnswer == 0){
+					this.endRound();
+				}
+			},
+			startRound(){
+				this.roundNumber++;
+				if (this.roundNumber>5){
+					this.stopGame();
+					
+				}
+				this.expression = this.getNewExpression();
+			},
+			endRound(){
+				if (this.roundNumber>0) {
+					let historyElement = {
+						expression: this.expression,
+						userAnswer: this.userAnswer,
+						rightAnswer: this.expressionResult,
+						point: 0+this.isRightAnswer,
+					} 
+					this.history.push(historyElement);
+				};
+				
+				this.startRound();
+			},
+			getNewExpression(){
+				let firstNumber = this.getRandomInt(100);
+				let secondNumber = this.getRandomInt(100);
+				let sign = this.getRandomSign();
+				let expression = ''+firstNumber+' '+sign+' '+secondNumber;
+				return expression;
+			},
+			getRandomInt(max) {
+			  return Math.floor(Math.random() * max);
+			},
+			getRandomSign(){
+				let key = this.getRandomInt(3)+1;
+				switch(key){
+					case 1: 
+						return '+';
+					case 2:
+						return '-';
+					case 3:
+						return '*';
+					default: break;
+				}
+			}
+		},
+		computed: {
+			timeForAnswer(){
+				let timeForAnswerMs = this.timeToAnswer - (this.applicationTime % this.timeToAnswer);
+				return timeForAnswerMs/1000;
+			},
+			expressionResult(){
+				return eval(this.expression);
+			},
+			isRightAnswer(){
+				if (this.userAnswer == this.expressionResult) {return true }else return false;
+			}
+		}
+	});
+</script>

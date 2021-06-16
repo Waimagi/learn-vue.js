@@ -1,6 +1,7 @@
 <html>
 	<head>
 		<script type="text/javascript" src="vue.js"></script>
+		<link rel="stylesheet" type="text/css" href="styles.css"></link>
 	</head>
 	<body>
 		<div id="app">
@@ -23,7 +24,7 @@
 					<th>right answer</th>
 				</thead>
 				<tbody>
-					<tr v-for="item in history">
+					<tr v-for="item in history" :class="item.isRightAnswer ? 'success' : 'wrong'">
 						<td>{{item.expression}}</td>
 						<td>{{item.userAnswer}}</td>
 						<td>{{item.rightAnswer}}</td>
